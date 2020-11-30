@@ -17,11 +17,19 @@ def create_orf(d_k, m):
     return apply_scaling(scale, blocks.reshape(-1, d_k)[:m])
 
 
-def apply_kernel(x, orf, epsilon=1e-6):
+def apply_regular_feature_map(x, orf, epsilon=1e-6):
     m, d_k = orf.shape
     proj_x = x @ orf.T / math.pow(d_k, 1 / 4)
     norm = (x ** 2).sum(dim=-1, keepdim=True) / (2 * math.sqrt(d_k))
     return (torch.exp(proj_x - norm) + epsilon) / math.sqrt(m)
+
+
+def apply_hyperbolic_feature_map(x, orf, epsilon=1e-6):
+    m, d_k = orf.shape
+    proj_x = x @ orf.T / math.pow(d_k, 1 / 4)
+    proj_x = torch.cat([proj_x, -proj_x], dim=-1)
+    norm = (x ** 2).sum(dim=-1, keepdim=True) / (2 * math.sqrt(d_k))
+    return (torch.exp(proj_x - norm) + epsilon) / math.sqrt(2 * m)
 
 
 def fast_attention(query, key, value):
@@ -31,11 +39,14 @@ def fast_attention(query, key, value):
 
 
 class FastSelfAttention(Module):
-    def __init__(self, d_model, h, m):
+    def __init__(self, d_model, h, m, use_hyperbolic):
         super(FastSelfAttention, self).__init__()
         self.h = h
         self.linears = ModuleList([Linear(d_model, d_model) for _ in range(4)])
         self.register_buffer("orf", create_orf(d_model // h, m), persistent=False)
+        self.apply_feature_map = apply_regular_feature_map
+        if use_hyperbolic:
+            self.apply_feature_map = apply_hyperbolic_feature_map
 
     def redraw_orf(self):
         m, d_k = self.orf.shape
@@ -52,8 +63,8 @@ class FastSelfAttention(Module):
     def forward(self, x):
         B, L, _ = x.shape
         query, key, value = (self.split_by_head(l(x), B, L) for l in self.linears[:3])
-        query = apply_kernel(query, self.orf)
-        key = apply_kernel(key, self.orf)
+        query = self.apply_feature_map(query, self.orf)
+        key = self.apply_feature_map(key, self.orf)
         out = fast_attention(query, key, value)
         out = self.concat_by_head(out, B, L)
         out = self.linears[3](out)

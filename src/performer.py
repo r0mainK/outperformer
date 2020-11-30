@@ -50,7 +50,18 @@ class Sublayer(Module):
 
 
 class OutPerformer(Module):
-    def __init__(self, vocab_size, max_seq_length, d_model, d_ff, n_layers, h, m, dropout_rate):
+    def __init__(
+        self,
+        vocab_size,
+        max_seq_length,
+        d_model,
+        d_ff,
+        n_layers,
+        h,
+        m,
+        dropout_rate,
+        use_hyperbolic,
+    ):
         super(OutPerformer, self).__init__()
         self.embedding_layer = Sublayer(
             d_model, dropout_rate, EmbeddingLayer(vocab_size, max_seq_length, d_model)
@@ -58,7 +69,7 @@ class OutPerformer(Module):
 
         stack = [
             (
-                Sublayer(d_model, dropout_rate, FastSelfAttention(d_model, h, m)),
+                Sublayer(d_model, dropout_rate, FastSelfAttention(d_model, h, m, use_hyperbolic)),
                 Sublayer(
                     d_model, dropout_rate, ChunkedFeedForwardLayer(d_model, d_ff, dropout_rate)
                 ),
