@@ -18,7 +18,7 @@ def create_orf(d_k, m):
 
 
 def apply_kernel(x, orf, epsilon=1e-6):
-    d_k, m = orf.shape
+    m, d_k = orf.shape
     proj_x = x @ orf.T / math.pow(d_k, 1 / 4)
     norm = (x ** 2).sum(dim=-1, keepdim=True) / (2 * math.sqrt(d_k))
     return (torch.exp(proj_x - norm) + epsilon) / math.sqrt(m)
