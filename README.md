@@ -3,7 +3,7 @@
 Repository containing the implementations related to my blog post series on scaling Transformers:
 
 - [Scaling Transformers: Reform your ways](https://keramitas.io/2020/11/24/scaling-transformers-reform-your-ways.html)
-- [Scaling Transformers: Perform at your best]()
+- [Scaling Transformers: Perform at your best](https://keramitas.io/2020/12/02/scaling-transformers-perform-at-your-best.html)
 
 Check those out for a detailed explanation of the code and additional information (like reference papers and related codebases).
 
